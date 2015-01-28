@@ -5,7 +5,6 @@ date: 2015-01-28 11:26:39 -0700
 comments: false
 categories: 
 - Test Kitchen
-published: false
 ---
 
 ## The Scenario
@@ -22,8 +21,9 @@ test/shared/spec_helper.rb # the helper
 ```
 
 As I was working back and forth in the tests and spec_helper I would execute `kitchen verify` to run the updated tests. I noticed that spec_helper.rb was not being updated, so I would have to:  
-a) run kitchen converge or  
-b) copy the file from my workstation to the kitchen node to the proper directory -- both are inefficient methods.
+a) run `kitchen converge` or  
+b) copy the file from my workstation to the kitchen node to the proper directory  
+Both are inefficient methods.
 
 ## The Solution
 Turns out the `kitchen verify` stage does update the spec_helper.rb as long as its in the correct directory. In the example of the serverspec tests I created the directory path `test/integration/helpers/serverspec` and moved spec_helper.rb file in the directory. Then I updated the tests to load spec_helper by adding:
@@ -32,8 +32,8 @@ require_relative "./spec_helper"
 ```
 
 The directory path convention will now do two things:  
- 1. `kitchen verify` will update the spec_helper.rb (and other helper files)
- 1. spec_helper.rb will be copied into each serverspec suite directory allowing current
+1. `kitchen verify` will update the spec_helper.rb (and other helper files)  
+2. spec_helper.rb will be copied into each serverspec suite directory allowing current
 directory access.
 
 ## In Short
