@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Test Kitchen | Patrick Wright's Blog]]></title>
+  <link href="http://patrick-wright.github.io/blog/categories/test-kitchen/atom.xml" rel="self"/>
+  <link href="http://patrick-wright.github.io/"/>
+  <updated>2015-01-28T11:49:53-07:00</updated>
+  <id>http://patrick-wright.github.io/</id>
+  <author>
+    <name><![CDATA[Patrick Wright]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Test Kitchen Integration Helpers]]></title>
+    <link href="http://patrick-wright.github.io/blog/2015/01/28/test-kitchen-integration-helpers/"/>
+    <updated>2015-01-28T11:26:39-07:00</updated>
+    <id>http://patrick-wright.github.io/blog/2015/01/28/test-kitchen-integration-helpers</id>
+    <content type="html"><![CDATA[<h2>The Scenario</h2>
+
+<p>I was developing some serverspec tests against a Test Kitchen fixture cookbook designed to exercise multiple configurations of my LWRP. The tests loaded a spec_helper for general configuration as:
+<code>ruby
+require_relative '../../../kitchen/data/spec_helper'
+</code></p>
+
+<p>This was an existing project so I continued the same pattern for my tests. The project test structure looked like this:
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>test/integration/my_suite/serverspec/assert_something_spec.rb # the test&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;test/shared/spec_helper.rb # the helper</span></code></pre></td></tr></table></div></figure></p>
+
+<p>As I was working back and forth in the tests and spec_helper I would execute <code>kitchen verify</code> to run the updated tests. I noticed that spec_helper.rb was not being updated, so I would have to:<br/>
+a) run <code>kitchen converge</code> or<br/>
+b) copy the file from my workstation to the kitchen node to the proper directory<br/>
+Both are inefficient methods.</p>
+
+<h2>The Solution</h2>
+
+<p>Turns out the <code>kitchen verify</code> stage does update the spec_helper.rb as long as its in the correct directory. In the example of the serverspec tests I created the directory path <code>test/integration/helpers/serverspec</code> and moved spec_helper.rb file in the directory. Then I updated the tests to load spec_helper by adding:
+<code>ruby
+require_relative "./spec_helper"
+</code></p>
+
+<p>The directory path convention will now do two things:<br/>
+1. <code>kitchen verify</code> will update the spec_helper.rb (and other helper files)<br/>
+2. spec_helper.rb will be copied into each serverspec suite directory allowing current
+directory access.</p>
+
+<h2>In Short</h2>
+
+<p>Place all Kitchen helper files for your test frameworks into <code>test/integration/helpers/&lt;framework&gt;</code> and your tests will have CWD access.</p>
+]]></content>
+  </entry>
+  
+</feed>
