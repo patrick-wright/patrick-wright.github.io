@@ -11,7 +11,7 @@ categories:
 
 ## The Scenario
 I had created an LWRP that defined a standard attribute. That same attribute value
-could also be assigned based on other parameters, and then assigned by the provider. For example:
+could also be assigned by the provider. For example:
 
 #### Chef Resource snippet
 ```ruby
