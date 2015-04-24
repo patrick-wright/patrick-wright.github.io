@@ -28,7 +28,7 @@ new_resource.local_path(::File.join(new_resource.file_cache_path,
   ::File.basename(artifact.download_uri))) if new_resource.local_path.nil?
 ```
 
-This statement will set `local_path` on `new_resource` if it was not set by the resource, and it will be assigned
+This statement will set `local_path` on `new_resource` if it was not set by the resource, or it will be assigned
 a valid path dynamically generated during the chef client run.
 
 #### Chef Recipe Option 1 - Common Approach
@@ -68,7 +68,6 @@ Read more about the [resources](http://docs.chef.io/dsl_recipe.html#resources) m
 my_resource 'name' do
   attr1 :value
 end
-
 
 resources('my_resource[name]').attr1 => :value
 resources('my_resource[name]').attr2 => nil # assume the provider sets this attribute
