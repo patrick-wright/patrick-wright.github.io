@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Lazy Attribute Evaluation | Patrick Wright's Blog]]></title>
   <link href="http://patrick-wright.github.io/blog/categories/lazy-attribute-evaluation/atom.xml" rel="self"/>
   <link href="http://patrick-wright.github.io/"/>
-  <updated>2015-04-24T09:09:39-07:00</updated>
+  <updated>2015-04-24T09:14:18-07:00</updated>
   <id>http://patrick-wright.github.io/</id>
   <author>
     <name><![CDATA[Patrick Wright]]></name>
@@ -38,7 +38,7 @@ new_resource.local_path(::File.join(new_resource.file_cache_path,
   ::File.basename(artifact.download_uri))) if new_resource.local_path.nil?
 </code></pre>
 
-<p>This statement will set <code>local_path</code> on <code>new_resource</code> if it was not set by the resource, and it will be assigned
+<p>This statement will set <code>local_path</code> on <code>new_resource</code> if it was not set by the resource, or it will be assigned
 a valid path dynamically generated during the chef client run.</p>
 
 <h4>Chef Recipe Option 1 - Common Approach</h4>

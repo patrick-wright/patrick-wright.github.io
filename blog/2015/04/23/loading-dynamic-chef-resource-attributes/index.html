@@ -114,7 +114,7 @@ could also be assigned by the provider. For example:</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>This statement will set <code>local_path</code> on <code>new_resource</code> if it was not set by the resource, and it will be assigned
+<p>This statement will set <code>local_path</code> on <code>new_resource</code> if it was not set by the resource, or it will be assigned
 a valid path dynamically generated during the chef client run.</p>
 
 <h4>Chef Recipe Option 1 - Common Approach</h4>
@@ -177,11 +177,9 @@ Read more about the <a href="http://docs.chef.io/dsl_recipe.html#resources">reso
 <span class='line-number'>4</span>
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
-<span class='line-number'>7</span>
 </pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">my_resource</span> <span class="s1">&#39;name&#39;</span> <span class="k">do</span>
 </span><span class='line'>  <span class="n">attr1</span> <span class="ss">:value</span>
 </span><span class='line'><span class="k">end</span>
-</span><span class='line'>
 </span><span class='line'>
 </span><span class='line'><span class="n">resources</span><span class="p">(</span><span class="s1">&#39;my_resource[name]&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">attr1</span> <span class="o">=&gt;</span> <span class="ss">:value</span>
 </span><span class='line'><span class="n">resources</span><span class="p">(</span><span class="s1">&#39;my_resource[name]&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">attr2</span> <span class="o">=&gt;</span> <span class="kp">nil</span> <span class="c1"># assume the provider sets this attribute</span>
