@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Lazy Attribute Evaluation | Patrick Wright's Blog]]></title>
   <link href="http://patrick-wright.github.io/blog/categories/lazy-attribute-evaluation/atom.xml" rel="self"/>
   <link href="http://patrick-wright.github.io/"/>
-  <updated>2015-04-24T09:07:34-07:00</updated>
+  <updated>2015-04-24T09:09:39-07:00</updated>
   <id>http://patrick-wright.github.io/</id>
   <author>
     <name><![CDATA[Patrick Wright]]></name>
@@ -21,7 +21,7 @@
     <content type="html"><![CDATA[<h2>The Scenario</h2>
 
 <p>I had created an LWRP that defined a standard attribute. That same attribute value
-could also be assigned based on other parameters, and then assigned by the provider. For example:</p>
+could also be assigned by the provider. For example:</p>
 
 <h4>Chef Resource snippet</h4>
 
