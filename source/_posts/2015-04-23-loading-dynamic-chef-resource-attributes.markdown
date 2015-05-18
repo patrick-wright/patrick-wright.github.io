@@ -9,45 +9,94 @@ categories:
 - Recipe DSL
 ---
 
-## The Scenario
-I had created an LWRP that defined a standard attribute. That same attribute value
-could also be assigned by the provider. For example:
+Assigning a Chef resource to an instance variable can be quite useful when you need to recall attribute values for later use. However, only the default and set attributes will be available to the resource instance variable. If the provider sets the value of an attribute during the client run the new value for that attribute will not be available to the resource instance variable. In this post, I cover how to load attributes that are set dynamically. Below are simple examples to demonstrate the problem.
 
-#### Chef Resource snippet
+#### Chef Recipe Option 1 - Static Approach
+This example demonstrates a straight-forward use case where the path of a file has been predetermined.
 ```ruby
-attribute :file_cache_path, kind_of: String, default: Chef::Config[:file_cache_path]
+path = '/tmp/file'
 
-attribute :local_path, kind_of: String
-```
-
-#### Chef Provider snippet
-```ruby
-artifact = some_method_that_queries_for_an_artifact
-
-new_resource.local_path(::File.join(new_resource.file_cache_path,
-  ::File.basename(artifact.download_uri))) if new_resource.local_path.nil?
-```
-
-This statement will set `local_path` on `new_resource` if it was not set by the resource, or it will be assigned
-a valid path dynamically generated during the chef client run.
-
-#### Chef Recipe Option 1 - Common Approach
-```ruby
-path = '/tmp/file.path'
-
-# assume this resource accepts a project name,
-# queries for the latest version,
-# and downloads the file to `local_path`
-artifactory_artifact 'my-artifact'
-  local_path path
+remote_file path
+  source "some_remote_path"
 end
 
-package 'my-artifact' do
+package 'downloaded-package' do
   source path
 end
 ```
 
 #### Chef Recipe Option 2 - Initial Expectation
+To describe a more dynamic example I have provided some code. Here is a Resource class with code removed for brevity containing an attribute that can be set on the resource, or in relation to our issue can be set by the provider.
+```ruby
+class Chef::Resource::OmnibusArtifactoryArtifact < Chef::Resource::LWRPBase
+  self.resource_name = :omnibus_artifactory_artifact
+
+  actions :create, :create_if_missing
+  default_action :create
+
+  # ...
+
+  #
+  # download directory
+  #
+  attribute :file_cache_path, kind_of: String, default: Chef::Config[:file_cache_path]
+
+  #
+  # local file path. Can set the canonical file path or call #local_path on a
+  # resource instance to retrieve the fetched file name
+  #
+  attribute :local_path, kind_of: String
+
+  # ...
+end
+```
+
+Here is the relative Provider class with code removed for brevity. Notice the statement in the the `#download` method where `new_resource.local_path` is assigned. If it was not set by the resource it will be assigned a valid path dynamically generated during the chef client run.
+```ruby
+aclass Chef::Provider::OmnibusArtifactoryArtifact < Chef::Provider::LWRPBase
+
+  # ...
+
+  action :create do
+    download :create
+  end
+
+  action :create_if_missing do
+    download :create_if_missing
+  end
+
+  private
+
+  # ...
+
+  def omnibus_artifact_property_search
+    # ...
+    # returns an Arifact instance based on set attributes
+  end
+
+  def download(remote_file_action)
+    artifact = omnibus_artifact_property_search
+    properties = artifact.properties
+
+    # set local_path if not set as an attribute
+    new_resource.local_path(::File.join(new_resource.file_cache_path,
+                            ::File.basename(artifact.download_uri))) if new_resource.local_path.nil?
+
+    converge_by("Download #{artifact.download_uri} to #{new_resource.local_path}") do
+      remote_file new_resource.local_path do
+        action remote_file_action
+        source artifact.download_uri
+        # ...
+      end
+    end
+  end
+ 
+  # ...
+
+end
+```
+
+Recipe example:
 ```ruby
 artifact = artifactory_artifact 'my-artifact'
 
@@ -56,13 +105,13 @@ package 'my-artifact' do
 end
 ```
 
-This example fails.  `artifact` will be assigned at compile time.  Since `local_path` has not been
-set, it will be set to the attribute's default value. In this case `nil`.  I had initially expected the provider code
-snippet above to properly set `local_path` before realizing that it is being executed after `artifact` instance is
-assigned.
+This example fails. `artifact` will be assigned at compile time.  Since `local_path` has not been
+set, it will be set to the attribute's default value. In this case `nil`.
+
+_To my mistake, I had initially expected the provider code snippet above to properly set `local_path` before realizing that it is being executed after `artifact` instance is assigned._
 
 ## The Solution
-I was able to pick the brain of my colleague, Joshua Timberman.  He enlightened me of the `resources` DSL recipe method.
+I was able to pick the brain of my colleague, Joshua Timberman.  He enlightened me of the `resources` DSL recipe method. This method will look up a resource in the resource collection using the sytnax `resources("resource_type[resource_name]")`. Since it returns a Resource instance we can call methods on that instance. For example, calling the methods that return attribute values.
 Read more about the [resources](http://docs.chef.io/dsl_recipe.html#resources) method.
 ```ruby
 my_resource 'name' do
@@ -112,12 +161,3 @@ package 'my-artifact' do
   source artifactory_artifact_local_path('my-artifact')
 end
 ```
-
-Makes me meta-wonder...
-```ruby
-some_resource 'resource-name' do
-  attribute_name Chef::LazyResourceAttr.some_resource('resource-name', :dynamic_attribute)
-end
-```
-
-Another project for another day.
