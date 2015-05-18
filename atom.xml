@@ -4,7 +4,7 @@
   <title><![CDATA[Patrick Wright's Blog]]></title>
   <link href="http://patrick-wright.github.io/atom.xml" rel="self"/>
   <link href="http://patrick-wright.github.io/"/>
-  <updated>2015-05-17T20:57:31-07:00</updated>
+  <updated>2015-05-17T21:00:31-07:00</updated>
   <id>http://patrick-wright.github.io/</id>
   <author>
     <name><![CDATA[Patrick Wright]]></name>
@@ -94,7 +94,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>Here is the relative Provider class with code removed for brevity. Notice the statement in the the <code>#download</code> method where <code>new_resource.local_path</code> is assigned. If it was not set by the resource it will be assigned a valid path dynamically generated during the chef client run.</p>
+<p>Here is the relative Provider class with code removed for brevity. Notice the statement in the <code>#download</code> method where <code>new_resource.local_path</code> (line 27) is assigned. If it was not set by the resource it will be assigned a valid path dynamically generated during the chef client run.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
