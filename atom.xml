@@ -4,7 +4,7 @@
   <title><![CDATA[Patrick Wright's Blog]]></title>
   <link href="http://patrick-wright.github.io/atom.xml" rel="self"/>
   <link href="http://patrick-wright.github.io/"/>
-  <updated>2015-05-17T21:00:31-07:00</updated>
+  <updated>2015-05-17T21:05:00-07:00</updated>
   <id>http://patrick-wright.github.io/</id>
   <author>
     <name><![CDATA[Patrick Wright]]></name>
@@ -22,7 +22,7 @@
 
 <h4>Chef Recipe Option 1 - Static Approach</h4>
 
-<p>This example demonstrates a straight-forward use case where the path of a file has been predetermined.</p>
+<p>This example demonstrates a straight-forward use case where the path of a file has been predetermined, but uses the resource instance&rsquo;s existing attribute values.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -31,16 +31,12 @@
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/tmp/file&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="n">remote_file</span> <span class="n">path</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">my_file</span> <span class="o">=</span> <span class="n">remote_file</span> <span class="s1">&#39;/tmp/file&#39;</span>
 </span><span class='line'>  <span class="n">source</span> <span class="s2">&quot;some_remote_path&quot;</span>
 </span><span class='line'><span class="k">end</span>
 </span><span class='line'>
 </span><span class='line'><span class="n">package</span> <span class="s1">&#39;downloaded-package&#39;</span> <span class="k">do</span>
-</span><span class='line'>  <span class="n">source</span> <span class="n">path</span>
+</span><span class='line'>  <span class="n">source</span> <span class="n">my_file</span><span class="o">.</span><span class="n">name</span>
 </span><span class='line'><span class="k">end</span>
 </span></code></pre></td></tr></table></div></figure>
 

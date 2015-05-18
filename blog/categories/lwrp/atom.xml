@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Lwrp | Patrick Wright's Blog]]></title>
   <link href="http://patrick-wright.github.io/blog/categories/lwrp/atom.xml" rel="self"/>
   <link href="http://patrick-wright.github.io/"/>
-  <updated>2015-05-17T21:00:31-07:00</updated>
+  <updated>2015-05-17T21:05:00-07:00</updated>
   <id>http://patrick-wright.github.io/</id>
   <author>
     <name><![CDATA[Patrick Wright]]></name>
@@ -22,7 +22,7 @@
 
 <h4>Chef Recipe Option 1 - Static Approach</h4>
 
-<p>This example demonstrates a straight-forward use case where the path of a file has been predetermined.
+<p>This example demonstrates a straight-forward use case where the path of a file has been predetermined, but uses the resource instance&rsquo;s existing attribute values.
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -30,17 +30,13 @@
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">path</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">file</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">my_file</span> <span class="o">=</span> <span class="n">remote_file</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">file</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">source</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">some_remote_path</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;</span>
+</span><span class='line'><span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
 </span><span class='line'>
-</span><span class='line'><span class="sr">&lt;p&gt;remote_file path</span>
-</span><span class='line'><span class="sr">  source &amp;ldquo;some_remote_path&amp;rdquo;</span>
-</span><span class='line'><span class="sr">end&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span><span class="n">package</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">downloaded</span><span class="o">-</span><span class="n">package</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span> <span class="k">do</span>
-</span><span class='line'>  <span class="n">source</span> <span class="n">path</span>
-</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="sr">&lt;p&gt;package &amp;lsquo;downloaded-package&amp;rsquo; do</span>
+</span><span class='line'><span class="sr">  source my_file.name</span>
+</span><span class='line'><span class="sr">end</span>
 </span></code></pre></td></tr></table></div></figure></p>
 
 <h4>Chef Recipe Option 2 - Initial Expectation</h4>
