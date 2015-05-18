@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Lwrp | Patrick Wright's Blog]]></title>
   <link href="http://patrick-wright.github.io/blog/categories/lwrp/atom.xml" rel="self"/>
   <link href="http://patrick-wright.github.io/"/>
-  <updated>2015-04-24T09:14:18-07:00</updated>
+  <updated>2015-05-17T20:57:31-07:00</updated>
   <id>http://patrick-wright.github.io/</id>
   <author>
     <name><![CDATA[Patrick Wright]]></name>
@@ -18,62 +18,188 @@
     <link href="http://patrick-wright.github.io/blog/2015/04/23/loading-dynamic-chef-resource-attributes/"/>
     <updated>2015-04-23T09:56:38-07:00</updated>
     <id>http://patrick-wright.github.io/blog/2015/04/23/loading-dynamic-chef-resource-attributes</id>
-    <content type="html"><![CDATA[<h2>The Scenario</h2>
+    <content type="html"><![CDATA[<p>Assigning a Chef resource to an instance variable can be quite useful when you need to recall attribute values for later use. However, only the default and set attributes will be available to the resource instance variable. If the provider sets the value of an attribute during the client run the new value for that attribute will not be available to the resource instance variable. In this post, I cover how to load attributes that are set dynamically. Below are simple examples to demonstrate the problem.</p>
 
-<p>I had created an LWRP that defined a standard attribute. That same attribute value
-could also be assigned by the provider. For example:</p>
+<h4>Chef Recipe Option 1 - Static Approach</h4>
 
-<h4>Chef Resource snippet</h4>
-
-<pre><code class="ruby">attribute :file_cache_path, kind_of: String, default: Chef::Config[:file_cache_path]
-
-attribute :local_path, kind_of: String
-</code></pre>
-
-<h4>Chef Provider snippet</h4>
-
-<pre><code class="ruby">artifact = some_method_that_queries_for_an_artifact
-
-new_resource.local_path(::File.join(new_resource.file_cache_path,
-  ::File.basename(artifact.download_uri))) if new_resource.local_path.nil?
-</code></pre>
-
-<p>This statement will set <code>local_path</code> on <code>new_resource</code> if it was not set by the resource, or it will be assigned
-a valid path dynamically generated during the chef client run.</p>
-
-<h4>Chef Recipe Option 1 - Common Approach</h4>
-
-<pre><code class="ruby">path = '/tmp/file.path'
-
-# assume this resource accepts a project name,
-# queries for the latest version,
-# and downloads the file to `local_path`
-artifactory_artifact 'my-artifact'
-  local_path path
-end
-
-package 'my-artifact' do
-  source path
-end
-</code></pre>
+<p>This example demonstrates a straight-forward use case where the path of a file has been predetermined.
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">path</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">file</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;remote_file path</span>
+</span><span class='line'><span class="sr">  source &amp;ldquo;some_remote_path&amp;rdquo;</span>
+</span><span class='line'><span class="sr">end&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span><span class="n">package</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">downloaded</span><span class="o">-</span><span class="n">package</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">source</span> <span class="n">path</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
 <h4>Chef Recipe Option 2 - Initial Expectation</h4>
 
-<pre><code class="ruby">artifact = artifactory_artifact 'my-artifact'
+<p>To describe a more dynamic example I have provided some code. Here is a Resource class with code removed for brevity containing an attribute that can be set on the resource, or in relation to our issue can be set by the provider.
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">Chef</span><span class="o">::</span><span class="no">Resource</span><span class="o">::</span><span class="no">OmnibusArtifactoryArtifact</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="no">Chef</span><span class="o">::</span><span class="no">Resource</span><span class="o">::</span><span class="no">LWRPBase</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">resource_name</span> <span class="o">=</span> <span class="ss">:omnibus_artifactory_artifact</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  actions :create, :create_if_missing</span>
+</span><span class='line'><span class="sr">  default_action :create&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="c1"># &amp;hellip;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="c1">#</span>
+</span><span class='line'>  <span class="c1"># download directory</span>
+</span><span class='line'>  <span class="c1">#</span>
+</span><span class='line'>  <span class="n">attribute</span> <span class="ss">:file_cache_path</span><span class="p">,</span> <span class="ss">kind_of</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="ss">default</span><span class="p">:</span> <span class="no">Chef</span><span class="o">::</span><span class="no">Config</span><span class="o">[</span><span class="ss">:file_cache_path</span><span class="o">]&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  #</span>
+</span><span class='line'><span class="sr">  # local file path. Can set the canonical file path or call #local_path on a</span>
+</span><span class='line'><span class="sr">  # resource instance to retrieve the fetched file name</span>
+</span><span class='line'><span class="sr">  #</span>
+</span><span class='line'><span class="sr">  attribute :local_path, kind_of: String&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="c1"># &amp;hellip;</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
-package 'my-artifact' do
-  source artifact.local_path
-end
-</code></pre>
+<p>Here is the relative Provider class with code removed for brevity. Notice the statement in the the <code>#download</code> method where <code>new_resource.local_path</code> is assigned. If it was not set by the resource it will be assigned a valid path dynamically generated during the chef client run.
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">aclass</span> <span class="no">Chef</span><span class="o">::</span><span class="no">Provider</span><span class="o">::</span><span class="no">OmnibusArtifactoryArtifact</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="no">Chef</span><span class="o">::</span><span class="no">Provider</span><span class="o">::</span><span class="no">LWRPBase</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  # &amp;hellip;&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="n">action</span> <span class="ss">:create</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">download</span> <span class="ss">:create</span>
+</span><span class='line'>  <span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  action :create_if_missing do</span>
+</span><span class='line'><span class="sr">    download :create_if_missing</span>
+</span><span class='line'><span class="sr">  end&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="kp">private</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  # &amp;hellip;&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">def</span> <span class="nf">omnibus_artifact_property_search</span>
+</span><span class='line'>    <span class="c1"># &amp;hellip;</span>
+</span><span class='line'>    <span class="c1"># returns an Arifact instance based on set attributes</span>
+</span><span class='line'>  <span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  def download(remote_file_action)</span>
+</span><span class='line'><span class="sr">    artifact = omnibus_artifact_property_search</span>
+</span><span class='line'><span class="sr">    properties = artifact.properties&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="c1"># set local_path if not set as an attribute</span>
+</span><span class='line'><span class="n">new_resource</span><span class="o">.</span><span class="n">local_path</span><span class="p">(</span><span class="o">::</span><span class="no">File</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_resource</span><span class="o">.</span><span class="n">file_cache_path</span><span class="p">,</span>
+</span><span class='line'>                        <span class="o">::</span><span class="no">File</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">artifact</span><span class="o">.</span><span class="n">download_uri</span><span class="p">)))</span> <span class="k">if</span> <span class="n">new_resource</span><span class="o">.</span><span class="n">local_path</span><span class="o">.</span><span class="n">nil?</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">converge_by</span><span class="p">(</span><span class="s2">&quot;Download </span><span class="si">#{</span><span class="n">artifact</span><span class="o">.</span><span class="n">download_uri</span><span class="si">}</span><span class="s2"> to </span><span class="si">#{</span><span class="n">new_resource</span><span class="o">.</span><span class="n">local_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">remote_file</span> <span class="n">new_resource</span><span class="o">.</span><span class="n">local_path</span> <span class="k">do</span>
+</span><span class='line'>    <span class="n">action</span> <span class="n">remote_file_action</span>
+</span><span class='line'>    <span class="n">source</span> <span class="n">artifact</span><span class="o">.</span><span class="n">download_uri</span>
+</span><span class='line'>    <span class="c1"># ...</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sr">/code&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  # &amp;hellip;&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
-<p>This example fails.  <code>artifact</code> will be assigned at compile time.  Since <code>local_path</code> has not been
-set, it will be set to the attribute&rsquo;s default value. In this case <code>nil</code>.  I had initially expected the provider code
-snippet above to properly set <code>local_path</code> before realizing that it is being executed after <code>artifact</code> instance is
-assigned.</p>
+<p>Recipe example:
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">artifact</span> <span class="o">=</span> <span class="n">artifactory_artifact</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">my</span><span class="o">-</span><span class="n">artifact</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;package &amp;lsquo;my-artifact&amp;rsquo; do</span>
+</span><span class='line'><span class="sr">  source artifact.local_path</span>
+</span><span class='line'><span class="sr">end</span>
+</span></code></pre></td></tr></table></div></figure></p>
+
+<p>This example fails. <code>artifact</code> will be assigned at compile time.  Since <code>local_path</code> has not been
+set, it will be set to the attribute&rsquo;s default value. In this case <code>nil</code>.</p>
+
+<p><em>To my mistake, I had initially expected the provider code snippet above to properly set <code>local_path</code> before realizing that it is being executed after <code>artifact</code> instance is assigned.</em></p>
 
 <h2>The Solution</h2>
 
-<p>I was able to pick the brain of my colleague, Joshua Timberman.  He enlightened me of the <code>resources</code> DSL recipe method.
+<p>I was able to pick the brain of my colleague, Joshua Timberman.  He enlightened me of the <code>resources</code> DSL recipe method. This method will look up a resource in the resource collection using the sytnax <code>resources("resource_type[resource_name]")</code>. Since it returns a Resource instance we can call methods on that instance. For example, calling the methods that return attribute values.
 Read more about the <a href="http://docs.chef.io/dsl_recipe.html#resources">resources</a> method.
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -131,15 +257,6 @@ end
 </span><span class='line'><span class="sr">  source artifactory_artifact_local_path(&amp;lsquo;my-artifact&amp;rsquo;)</span>
 </span><span class='line'><span class="sr">end</span>
 </span></code></pre></td></tr></table></div></figure></p>
-
-<p>Makes me meta-wonder&hellip;
-<code>ruby
-some_resource 'resource-name' do
-  attribute_name Chef::LazyResourceAttr.some_resource('resource-name', :dynamic_attribute)
-end
-</code></p>
-
-<p>Another project for another day.</p>
 ]]></content>
   </entry>
   
